@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+
+
+<script id="vertex-shader" type="x-shader/x-vertex">
+
+attribute  vec4 vPosition;
+attribute  vec3 vNormal;
+attribute  vec2 vTextCoords;
+
+varying vec2 fTextCoords;
+varying vec3 N, L, E;
+
+
+uniform mat4 modelViewMatrix;
+uniform mat4 projectionMatrix;
+
+uniform vec4 lightDirection;
+
+
+void main()
+{
+    fTextCoords = 0.5 * vTextCoords;
+    
+    vec3 pos = -(modelViewMatrix * vPosition).xyz;
+    
+    
+    L = normalize( lightDirection.xyz - pos );
+    
+    E =  -normalize(pos);
+    
+    vec4 NN = vec4(vNormal,0);
+    
+    N = normalize( (modelViewMatrix*NN).xyz);
+
+    gl_Position = projectionMatrix * modelViewMatrix * vPosition;
+    
+}
+
+
+</script>
+
+<script id="fragment-shader" type="x-shader/x-fragment">
+
+precision mediump float;
+
+varying vec2 fTextCoords;
+varying vec3 N, L, E;
+
+uniform sampler2D textMap;
+uniform float shininess;
+uniform vec4 ambientProduct, diffuseProduct, specularProduct;
+
+void main()
+{
+
+    vec4 fColor;
+    
+    vec3 H = normalize( L + E );
+    vec4 ambient = ambientProduct;
+
+    float Kd = max( dot(L, N), 0.0 );
+    vec4  diffuse = Kd*diffuseProduct;
+
+    float Ks = pow( max(dot(N, H), 0.0), shininess );
+    vec4  specular = Ks * specularProduct;
+    
+    if( dot(L, N) < 0.0 ) specular = vec4(0.0, 0.0, 0.0, 1.0);
+
+    fColor = ambient + diffuse +specular;
+    fColor.a = 1.0;
+    
+    gl_FragColor = fColor * texture2D(textMap, fTextCoords);
+}
+
+
+</script>
+
+<p></p>
+<button id="XButton">Rotate around X</button>
+<button id="YButton">Rotate around Y</button>
+<button id="ZButton">Rotate around Z</button>
+<button id="drawButton">Change Drawing Method</button>
+<p></p>
+<!--button id = "Button4">Increase Subdivisions</button>
+<button id = "Button5">Decrease Subdivisions</button-->
+
+<script type="text/javascript" src="utils/webgl-utils.js"></script>
+<script type="text/javascript" src="utils/initShaders.js"></script>
+<script type="text/javascript" src="utils/MV.js"></script>
+<script type="text/javascript" src="final_version.js"></script>
+
+<body>
+<canvas id="gl-canvas" width="650" height="650">
+    Oops ... your browser doesn't support the HTML5 canvas element
+</canvas>
+</body>
+</html>
